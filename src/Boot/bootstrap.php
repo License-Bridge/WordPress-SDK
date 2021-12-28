@@ -5,7 +5,10 @@
 
     global $sdkName, $thisSdkVersion, $lb_plugins;
 
-    $thisSdkVersion = '1.0.1';
+    $composer = file_get_contents(__DIR__."/../../composer.json");
+    $jsonComposer = json_decode($composer, true);
+    $thisSdkVersion = $jsonComposer['version'];
+    
     $sdkName = 'LicenseBridgeSDK';
     $active_plugins = get_option('active_plugins');
     $lb_plugins = get_option('lb_registered_plugins');
