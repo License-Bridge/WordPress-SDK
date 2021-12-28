@@ -75,7 +75,7 @@ class Loader
     {
         global $sdkName;
 
-        return $rootPath . "sdk/Loader/{$sdkName}.php";
+        return $rootPath . "vendor/license-bridge/wordpress-sdk/src/Boot/{$sdkName}.php";
     }
 
     private static function reorder_plugins($only_active = true)
