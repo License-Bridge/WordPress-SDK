@@ -9,7 +9,10 @@ class LicenseBridgeSDK
 {
     private $sdkPath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR;
 
-    private static $_instances = [];
+    private static $_instances = [
+        'sdk' => null,
+        'link' => null,
+    ];
 
     public function __construct()
     {
