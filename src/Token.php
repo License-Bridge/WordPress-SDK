@@ -67,5 +67,5 @@ class Token
         }
 
         return $token;
-    }F
+    }
 }
