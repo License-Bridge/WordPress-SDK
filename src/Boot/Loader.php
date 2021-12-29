@@ -2,6 +2,8 @@
 
 namespace LicenseBridge\WordPressUpdater\Boot;
 
+use LicenseBridge\WordPressUpdater\BridgeConfig;
+
 class Loader
 {
     public function __construct()
@@ -12,6 +14,8 @@ class Loader
     public static function register($pluginFilePath, $plugin)
     {
         global $thisSdkVersion;
+
+        
 
         register_deactivation_hook($pluginFilePath, function () use ($plugin) {
             global $lb_plugins;
@@ -67,7 +71,10 @@ class Loader
         self::load_latest_sdk();
         
         if (class_exists(LicenseBridgeSDK::class)) {
-            return LicenseBridgeSDK::instance();
+
+            $sdk = LicenseBridgeSDK::instance();
+            BridgeConfig::setConfig($plugin['plugin-slug'], $plugin);
+            return $sdk;
         }
     }
 

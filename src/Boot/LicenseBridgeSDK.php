@@ -41,7 +41,7 @@ class LicenseBridgeSDK
             self::$_instances['link'] = new PurchaseLink();
         }
 
-        return new self::$_instances['link']->get($slug);
+        return self::$_instances['link']->get($slug);
     }
 
     public function checkCredentials($slug)
