@@ -4,6 +4,8 @@ namespace LicenseBridge\WordPressSDK\Boot;
 use LicenseBridge\WordPressSDK\BridgeConfig;
 use LicenseBridge\WordPressSDK\PremiumUpgrade;
 
+use LicenseBridge\WordPressUpdater\BridgeConfig;
+
 class Loader
 {
     public function __construct()
