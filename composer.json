@@ -4,7 +4,7 @@
   "keywords": ["freemium", "license", "wordpress", "plugin", "wordpress-plugin", "theme", "wordpress-theme", "sdk"],
   "homepage": "https://license-bridge.com",
   "license": "GPL-3.0-only",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "require": {
       "php": ">=5.4"
   }
