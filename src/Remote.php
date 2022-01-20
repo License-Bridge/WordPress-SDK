@@ -1,6 +1,6 @@
 <?php
 
-namespace LicenseBridge\WordPressUpdater;
+namespace LicenseBridge\WordPressSDK;
 
 class Remote
 {

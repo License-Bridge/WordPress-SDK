@@ -1,6 +1,8 @@
 <?php
 
-namespace LicenseBridge\WordPressUpdater\Boot;
+namespace LicenseBridge\WordPressSDK\Boot;
+use LicenseBridge\WordPressSDK\BridgeConfig;
+use LicenseBridge\WordPressSDK\PremiumUpgrade;
 
 class Loader
 {
@@ -12,6 +14,8 @@ class Loader
     public static function register($pluginFilePath, $plugin)
     {
         global $thisSdkVersion;
+
+        
 
         register_deactivation_hook($pluginFilePath, function () use ($plugin) {
             global $lb_plugins;
@@ -67,7 +71,11 @@ class Loader
         self::load_latest_sdk();
         
         if (class_exists(LicenseBridgeSDK::class)) {
-            return LicenseBridgeSDK::instance();
+
+            $sdk = LicenseBridgeSDK::instance();
+            BridgeConfig::setConfig($plugin['plugin-slug'], $plugin);
+            PremiumUpgrade::init_hooks($plugin['plugin-slug']);
+            return $sdk;
         }
     }
 
@@ -75,7 +83,7 @@ class Loader
     {
         global $sdkName;
 
-        return $rootPath . "sdk/Loader/{$sdkName}.php";
+        return $rootPath . "vendor/license-bridge/wordpress-sdk/src/Boot/{$sdkName}.php";
     }
 
     private static function reorder_plugins($only_active = true)

@@ -1,22 +1,29 @@
 <?php
 
-namespace LicenseBridge\WordPressUpdater\Boot;
+namespace LicenseBridge\WordPressSDK\Boot;
 
-use LicenseBridge\WordPressUpdater\Credentials;
-use LicenseBridge\WordPressUpdater\PurchaseLink;
+use LicenseBridge\WordPressSDK\Credentials;
+use LicenseBridge\WordPressSDK\LicenseServer;
+use LicenseBridge\WordPressSDK\PurchaseLink;
 
 class LicenseBridgeSDK
 {
     private $sdkPath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR;
 
-    private static $_instances = [];
+    private static $_instances = [
+        'sdk' => null,
+        'link' => null,
+        'api' => null,
+    ];
 
     public function __construct()
     {
+        require_once $this->sdkPath . 'SlugInstance.php';
         require_once $this->sdkPath . 'BridgeConfig.php';
         require_once $this->sdkPath . 'Credentials.php';
+        require_once $this->sdkPath . 'AdminNotice.php';
         require_once $this->sdkPath . 'LicenseServer.php';
-        require_once $this->sdkPath . 'PremiumBuy.php';
+        require_once $this->sdkPath . 'PremiumUpgrade.php';
         require_once $this->sdkPath . 'PremiumUpdate.php';
         require_once $this->sdkPath . 'PurchaseLink.php';
         require_once $this->sdkPath . 'Remote.php';
@@ -34,11 +41,12 @@ class LicenseBridgeSDK
 
     public function getPurchaseLink($slug)
     {
-        if (self::$_instances['link'] === null) {
-            self::$_instances['link'] = new PurchaseLink();
-        }
+        return PurchaseLink::get($slug);
+    }
 
-        return new self::$_instances['link']->get($slug);
+    public function server()
+    {
+        return LicenseServer::instance();
     }
 
     public function checkCredentials($slug)

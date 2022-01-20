@@ -1,6 +1,6 @@
 <?php
 
-namespace LicenseBridge\WordPressUpdater;
+namespace LicenseBridge\WordPressSDK;
 
 class PurchaseLink
 {
@@ -15,6 +15,6 @@ class PurchaseLink
 
         $nonce = wp_create_nonce($slug."_license_key_nonce");
         $callback = urlencode(admin_url('admin.php?page='.$valuesUri.'&_nonce=' . $nonce));
-        return "${lbUrl}/product/${productSlug}?callback_url={$callback}";
+        return "${lbUrl}/market/${productSlug}?callback_url={$callback}";
     }
 }

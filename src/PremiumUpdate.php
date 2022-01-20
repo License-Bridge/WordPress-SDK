@@ -1,38 +1,33 @@
 <?php
 
-namespace LicenseBridge\WordPressUpdater;
+namespace LicenseBridge\WordPressSDK;
 
 class PremiumUpdate
 {
+    use SlugInstance;
+
     /**
-     * Plugin slug
+     * Plugin slug.
      */
     private $slug;
 
     /**
-     *TO load admin css only once
+     *TO load admin css only once.
      */
     private static $cssIncluded = false;
 
     /**
-     * License Server Provider
-     *
-     * @var LicenseServer
-     */
-    private $licenseServer;
-
-    /**
-     * Mark it af faled to acoid miltiple calls on one page load
+     * Mark it af faled to acoid miltiple calls on one page load.
      */
     private static $apiCalled = [];
 
     /**
-     * Store plugin metadata
+     * Store plugin metadata.
      */
     private static $plugin = [];
 
     /**
-     * To move plugin folder once
+     * To move plugin folder once.
      */
     private static $pluginFolderMoved = [];
 
@@ -42,17 +37,23 @@ class PremiumUpdate
     private $forceUpdate = false;
 
     /**
-     * Init hooks and create object
+     * Array with singleton instances.
+     *
+     * @var array
+     */
+    private static $instances = [];
+
+    /**
+     * Init hooks and create object.
      */
     public function __construct($slug)
     {
         $this->slug = $slug;
         $this->init_hooks();
-        $this->licenseServer = new LicenseServer($slug);
     }
 
     /**
-     * Init hooks
+     * Init hooks.
      *
      * @return void
      */
@@ -68,7 +69,7 @@ class PremiumUpdate
 
     /**
      * Opens popup with new plugin version informations
-     * Attached to the plugins_api filter
+     * Attached to the plugins_api filter.
      *
      * @param object $res
      * @param string $action
@@ -87,7 +88,7 @@ class PremiumUpdate
             return $res;
         }
 
-        if ($remote = $this->licenseServer->fetchPluginDetails()) {
+        if ($remote = LicenseServer::instance()->fetchPluginDetails($this->slug)) {
             $remote = json_decode($remote['body']);
             $res = new \stdClass();
             $res->name = $remote->name;
@@ -116,8 +117,9 @@ class PremiumUpdate
 
             $res->banners = [
                 'low'  => isset($remote->banner) ? $remote->banner : 'https://wpengine.com/wp-content/uploads/2017/03/plugged-in-hero.jpg',
-                'high' => isset($remote->banner) ? $remote->banner : 'https://wpengine.com/wp-content/uploads/2017/03/plugged-in-hero.jpg'
+                'high' => isset($remote->banner) ? $remote->banner : 'https://wpengine.com/wp-content/uploads/2017/03/plugged-in-hero.jpg',
             ];
+
             return $res;
         }
 
@@ -125,7 +127,7 @@ class PremiumUpdate
     }
 
     /**
-     * Popupinfo image width fix
+     * Popupinfo image width fix.
      */
     public function pluginPopupCss()
     {
@@ -138,7 +140,7 @@ class PremiumUpdate
 
     /**
      * Updateplugin to the latest version
-     * Attached to the site_transient_update_plugins filter
+     * Attached to the site_transient_update_plugins filter.
      *
      * @param object $transient
      * @return object
@@ -154,11 +156,12 @@ class PremiumUpdate
         }
 
         if (false == $remote = get_transient($this->slug)) {
-            $remote = $this->licenseServer->fetchPluginDetails();
+            $remote = LicenseServer::instance()->fetchPluginDetails($this->slug);
             static::$apiCalled[$this->slug] = true;
 
             if (is_wp_error($remote)) {
                 new AdminNotice($remote->get_error_message(), 'error');
+
                 return $transient;
             }
         }
@@ -166,7 +169,6 @@ class PremiumUpdate
         if ($remote) {
             $remote = json_decode($remote['body']);
             if ($this->newVersionAvailable($remote)) {
-
                 $res = new \stdClass();
                 $res->slug = $this->slug;
                 $res->plugin = $this->slug;
@@ -178,7 +180,7 @@ class PremiumUpdate
                 // If $transient doesn't exist - create it
                 if (!$transient) {
                     $transient = new \stdClass;
-                };
+                }
                 $transient->response[$res->plugin] = $res;
                 $transient->checked[$res->plugin] = $remote->version;
                 static::$plugin[$this->slug] = $res;
@@ -189,7 +191,7 @@ class PremiumUpdate
     }
 
     /**
-     * Check is nre plugin version available or not
+     * Check is nre plugin version available or not.
      *
      * @param object $remote
      * @return bool
@@ -200,11 +202,12 @@ class PremiumUpdate
         if ($this->forceUpdate) {
             return true;
         }
+
         return  version_compare($pluginVersion, $remote->version, '<') && version_compare($remote->requires, get_bloginfo('version'), '<');
     }
 
     /**
-     * Set license server
+     * Set license server.
      *
      * @param LicenseServer $licenseServer
      * @return void
@@ -247,7 +250,7 @@ class PremiumUpdate
     }
 
     /**
-     * Set force update
+     * Set force update.
      */
     public function setForceUpdate(bool $force)
     {
