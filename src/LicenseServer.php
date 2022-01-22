@@ -82,6 +82,36 @@ class LicenseServer
         return $remote;
     }
 
+    public function viewLicense($slug)
+    {
+        $credentials = Credentials::get($slug);
+        $lbUrl = BridgeConfig::getConfig($slug, 'license-bridge-api-url');
+        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
+        $cacheTime = BridgeConfig::getConfig($slug, 'view-cache-expire');
+
+        $cacheId = $prefix . '.details.' . md5($slug);
+
+        if (true || !($result = get_transient($cacheId))) {
+            $token = Token::instance()->getLicenceOauthToken($slug);
+            if ($token) {
+                $headers = [
+                    'Accept'        => 'application/json',
+                    'Authorization' => 'Bearer ' . $token['access_token'],
+                    'LicenseKey'    => $credentials['license_key'],
+                ];
+
+                $remote = wp_remote_get("{$lbUrl}/api/license/view/", [
+                    'headers' => $headers
+                ]);
+
+                $result = json_decode($remote['body']);
+                set_transient($cacheId, $result, $cacheTime);
+            }
+        }
+
+        return $result ?? false;
+    }
+
     /**
      * Check is response from server valid.
      *
