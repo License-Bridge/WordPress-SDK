@@ -82,6 +82,12 @@ class LicenseServer
         return $remote;
     }
 
+    /**
+     * API call to view license details
+     *
+     * @param string $slug
+     * @return array || false
+     */
     public function viewLicense($slug)
     {
         $credentials = Credentials::get($slug);
@@ -91,7 +97,7 @@ class LicenseServer
 
         $cacheId = $prefix . '.details.' . md5($slug);
 
-        if (true || !($result = get_transient($cacheId))) {
+        if (!($result = get_transient($cacheId))) {
             $token = Token::instance()->getLicenceOauthToken($slug);
             if ($token) {
                 $headers = [
@@ -104,12 +110,39 @@ class LicenseServer
                     'headers' => $headers
                 ]);
 
-                $result = json_decode($remote['body']);
+                $result = json_decode($remote['body'], true);
                 set_transient($cacheId, $result, $cacheTime);
             }
         }
 
         return $result ?? false;
+    }
+
+    /**
+     * API call to cancel license
+     *
+     * @param string $slug
+     * @return array
+     */
+    public function cancelLicense($slug)
+    {
+        $credentials = Credentials::get($slug);
+        $lbUrl = BridgeConfig::getConfig($slug, 'license-bridge-api-url');
+        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
+        $token = new Token($slug);
+        $token = Token::instance()->getLicenceOauthToken($slug);
+
+        $headers = [
+            'Accept'        => 'application/json',
+            'Authorization' => 'Bearer ' . $token['access_token'],
+            'LicenseKey'    => $credentials['license_key'],
+        ];
+
+        $remote = wp_remote_get("{$lbUrl}/api/license/cancel/", [
+            'headers' => $headers
+        ]);
+
+        return json_decode($remote['body'], true);
     }
 
     /**
