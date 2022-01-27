@@ -71,7 +71,10 @@ class Loader
 
         if (class_exists(LicenseBridgeSDK::class)) {
             $sdk = LicenseBridgeSDK::instance();
+
+            $plugin_data = get_plugin_data(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $plugin['plugin-slug']);
             BridgeConfig::setConfig($plugin['plugin-slug'], $plugin + [
+                'plugin-version'   => $plugin_data['Version'],
                 'plugin-directory' => plugin_dir_path($plugin['plugin-slug'])
             ]);
             PremiumUpgrade::init_hooks($plugin['plugin-slug']);
