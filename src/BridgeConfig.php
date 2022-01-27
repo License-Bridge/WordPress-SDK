@@ -17,7 +17,7 @@ class BridgeConfig
             'license-bridge-api-url'             => 'https://app.licensebridge.com',
             'license-bridge-oauth-token-uri' => '/oauth/token',
             'plugin-transient-cache-expire'  => 43200, // value is in seconds (43200 seconds -> 12h)
-            'view-cache-expire'              => 3600, // value is in seconds (3600 seconds -> 1h)
+            'cache-expire'              => 3600, // value is in seconds (3600 seconds -> 1h)
         ];
 
         self::$bridgeConfig[$slug] = array_merge($default, $config);

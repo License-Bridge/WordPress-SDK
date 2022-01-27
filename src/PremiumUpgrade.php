@@ -65,12 +65,13 @@ class PremiumUpgrade
         wp_cache_flush();
 
         $upgrader = new Plugin_Upgrader();
-        $update = new PremiumUpdate($slug);
-        $update->setForceUpdate(true);
+        PremiumUpdate::init_hooks($slug);
+        PremiumUpdate::setForceUpdate(true);
         $upgraded = $upgrader->upgrade($slug);
         activate_plugin($slug);
         $upgrader->maintenance_mode(false);
 
+        PremiumUpdate::setForceUpdate(false);
         return $upgraded;
     }
 }

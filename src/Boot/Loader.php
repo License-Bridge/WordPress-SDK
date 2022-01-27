@@ -1,8 +1,11 @@
 <?php
 
 namespace LicenseBridge\WordPressSDK\Boot;
+
 use LicenseBridge\WordPressSDK\BridgeConfig;
+use LicenseBridge\WordPressSDK\PremiumUpdate;
 use LicenseBridge\WordPressSDK\PremiumUpgrade;
+
 class Loader
 {
     public function __construct()
@@ -13,8 +16,6 @@ class Loader
     public static function register($pluginFilePath, $plugin)
     {
         global $thisSdkVersion;
-
-        
 
         register_deactivation_hook($pluginFilePath, function () use ($plugin) {
             global $lb_plugins;
@@ -44,7 +45,6 @@ class Loader
 
         $found = false;
         $updated = array_filter(array_map(function ($item) use ($pluginInfo) {
-            
             if ($item['plugin-slug'] === $pluginInfo['plugin-slug']) {
                 $found = true;
                 // To update version dinamically we return new version
@@ -68,12 +68,13 @@ class Loader
         );
         self::reorder_plugins(is_plugin_active($plugin['plugin-slug']));
         self::load_latest_sdk();
-        
-        if (class_exists(LicenseBridgeSDK::class)) {
 
+        if (class_exists(LicenseBridgeSDK::class)) {
             $sdk = LicenseBridgeSDK::instance();
             BridgeConfig::setConfig($plugin['plugin-slug'], $plugin);
             PremiumUpgrade::init_hooks($plugin['plugin-slug']);
+            PremiumUpdate::init_hooks($plugin['plugin-slug']);
+
             return $sdk;
         }
     }
@@ -119,7 +120,6 @@ class Loader
             return;
         }
 
-        
         $plugin_key = array_search($latestSdk['plugin-slug'], $active_plugins);
         array_splice($active_plugins, $plugin_key, 1);
         array_unshift($active_plugins, $latestSdk['plugin-slug']);
@@ -133,7 +133,6 @@ class Loader
         $plugin = get_option('lb_latest_sdk_plugin');
         $version = isset($plugin['sdk_version']) ? $plugin['sdk_version'] : $thisSdkVersion;
 
-        
         if ($plugin && isset($plugin['sdk_version']) && isset($plugin['sdk_path'])) {
             include_once $plugin['sdk_path'];
 

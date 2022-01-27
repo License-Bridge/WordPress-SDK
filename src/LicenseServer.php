@@ -93,7 +93,7 @@ class LicenseServer
         $credentials = Credentials::get($slug);
         $lbUrl = BridgeConfig::getConfig($slug, 'license-bridge-api-url');
         $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
-        $cacheTime = BridgeConfig::getConfig($slug, 'view-cache-expire');
+        $cacheTime = BridgeConfig::getConfig($slug, 'cache-expire');
 
         $cacheId = $prefix . '.details.' . md5($slug);
 

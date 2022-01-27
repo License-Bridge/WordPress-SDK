@@ -9,17 +9,12 @@ class PremiumUpdate
     /**
      * Plugin slug.
      */
-    private $slug;
+    private static $slug;
 
     /**
      *TO load admin css only once.
      */
     private static $cssIncluded = false;
-
-    /**
-     * Mark it af faled to acoid miltiple calls on one page load.
-     */
-    private static $apiCalled = [];
 
     /**
      * Store plugin metadata.
@@ -34,7 +29,7 @@ class PremiumUpdate
     /**
      * Force update when download premium first time, even if version is the same.
      */
-    private $forceUpdate = false;
+    private static $forceUpdate = false;
 
     /**
      * Array with singleton instances.
@@ -44,26 +39,24 @@ class PremiumUpdate
     private static $instances = [];
 
     /**
-     * Init hooks and create object.
-     */
-    public function __construct($slug)
-    {
-        $this->slug = $slug;
-        $this->init_hooks();
-    }
-
-    /**
      * Init hooks.
      *
      * @return void
      */
-    private function init_hooks()
+    public static function init_hooks($slug)
     {
-        add_filter('plugins_api', [$this, 'pluginPopupInfo'], 20, 3);
-        add_filter('site_transient_update_plugins', [$this, 'licensePluginUpdate']);
-        add_filter('upgrader_source_selection', [$this, 'upgraderMoveFolder'], 10, 4);
+        add_filter('plugins_api', function ($res, $action, $args) use ($slug) {
+            return self::pluginPopupInfo($res, $action, $args, $slug);
+        }, 20, 3);
+        add_filter('site_transient_update_plugins', function ($transient) use ($slug) {
+            return self::licensePluginUpdate($transient, $slug);
+        });
+        add_filter('upgrader_source_selection', function ($source, $remote_source, $upgrader, $extra) use ($slug) {
+            return self::upgraderMoveFolder($source, $remote_source, $upgrader, $extra, $slug);
+        }, 10, 4);
+
         if (self::$cssIncluded === false) {
-            add_action('admin_head', [$this, 'pluginPopupCss']);
+            add_action('admin_head', [static::class, 'pluginPopupCss']);
         }
     }
 
@@ -76,7 +69,7 @@ class PremiumUpdate
      * @param object $args
      * @return mixed
      */
-    public function pluginPopupInfo($res, $action, $args)
+    public static function pluginPopupInfo($res, $action, $args, $slug)
     {
         // do nothing if this is not about getting plugin information
         if ($action !== 'plugin_information') {
@@ -84,15 +77,15 @@ class PremiumUpdate
         }
 
         // do nothing if it is not our plugin
-        if ($this->slug !== $args->slug) {
+        if ($slug !== $args->slug) {
             return $res;
         }
 
-        if ($remote = LicenseServer::instance()->fetchPluginDetails($this->slug)) {
+        if ($remote = LicenseServer::instance()->fetchPluginDetails($slug)) {
             $remote = json_decode($remote['body']);
             $res = new \stdClass();
             $res->name = $remote->name;
-            $res->slug = $this->slug;
+            $res->slug = $slug;
             $res->version = $remote->version;
             $res->tested = $remote->tested;
             $res->requires = $remote->requires;
@@ -129,7 +122,7 @@ class PremiumUpdate
     /**
      * Popupinfo image width fix.
      */
-    public function pluginPopupCss()
+    public static function pluginPopupCss()
     {
         echo '<style>
         #section-description img, #section-changelog img {
@@ -145,33 +138,32 @@ class PremiumUpdate
      * @param object $transient
      * @return object
      */
-    public function licensePluginUpdate($transient)
+    public static function licensePluginUpdate($transient, $slug)
     {
-        if (empty($transient->checked) && !$this->forceUpdate) {
+        if (empty($transient->checked) && !static::$forceUpdate) {
             return $transient;
         }
 
-        if ((isset(static::$apiCalled[$this->slug]) && static::$apiCalled[$this->slug] && !$this->forceUpdate) || isset($transient->response[$this->slug])) {
-            return $transient;
-        }
-
-        if (false == $remote = get_transient($this->slug)) {
-            $remote = LicenseServer::instance()->fetchPluginDetails($this->slug);
-            static::$apiCalled[$this->slug] = true;
+        delete_transient($slug);
+        if (false == $remote = get_transient($slug)) {
+            $remote = LicenseServer::instance()->fetchPluginDetails($slug);
 
             if (is_wp_error($remote)) {
                 new AdminNotice($remote->get_error_message(), 'error');
 
                 return $transient;
             }
+
+            $cacheTime = BridgeConfig::getConfig($slug, 'cache-expire');
+            set_transient($slug, $remote, $cacheTime);
         }
 
         if ($remote) {
             $remote = json_decode($remote['body']);
-            if ($this->newVersionAvailable($remote)) {
+            if (self::newVersionAvailable($remote, $slug)) {
                 $res = new \stdClass();
-                $res->slug = $this->slug;
-                $res->plugin = $this->slug;
+                $res->slug = $slug;
+                $res->plugin = $slug;
                 $res->new_version = $remote->version;
                 $res->tested = $remote->tested;
                 $res->package = $remote->file_url;
@@ -183,10 +175,10 @@ class PremiumUpdate
                 }
                 $transient->response[$res->plugin] = $res;
                 $transient->checked[$res->plugin] = $remote->version;
-                static::$plugin[$this->slug] = $res;
+                static::$plugin[$slug] = $res;
             }
         }
-
+        //var_dump($transient);exit;
         return $transient;
     }
 
@@ -196,30 +188,19 @@ class PremiumUpdate
      * @param object $remote
      * @return bool
      */
-    private function newVersionAvailable($remote)
+    private static function newVersionAvailable($remote, $slug)
     {
-        $pluginVersion = BridgeConfig::getConfig($this->slug, 'plugin-version');
-        if ($this->forceUpdate) {
+        $pluginVersion = BridgeConfig::getConfig($slug, 'plugin-version');
+        if (static::$forceUpdate) {
             return true;
         }
 
         return  version_compare($pluginVersion, $remote->version, '<') && version_compare($remote->requires, get_bloginfo('version'), '<');
     }
 
-    /**
-     * Set license server.
-     *
-     * @param LicenseServer $licenseServer
-     * @return void
-     */
-    public function setLicenseServer(LicenseServer $licenseServer)
+    public static function upgraderMoveFolder($source, $remote_source, $upgrader, $extra, $slug)
     {
-        $this->licenseServer = $licenseServer;
-    }
-
-    public function upgraderMoveFolder($source, $remote_source, $upgrader, $extra)
-    {
-        if (!isset(static::$plugin[$this->slug])) {
+        if (!isset(static::$plugin[$slug])) {
             return $source;
         }
 
@@ -227,24 +208,24 @@ class PremiumUpdate
             return $source;
         }
 
-        if ($this->slug !== $extra['plugin']) {
+        if ($slug !== $extra['plugin']) {
             return $source;
         }
 
-        if (static::$plugin[$this->slug] && static::$plugin[$this->slug]->subfolder !== '') {
-            $source = trailingslashit($source) . trailingslashit(static::$plugin[$this->slug]->subfolder);
+        if (static::$plugin[$slug] && static::$plugin[$slug]->subfolder !== '') {
+            $source = trailingslashit($source) . trailingslashit(static::$plugin[$slug]->subfolder);
         }
 
-        $pluginDir = BridgeConfig::getConfig($this->slug, 'plugin-directory');
+        $pluginDir = BridgeConfig::getConfig($slug, 'plugin-directory');
         $newSource = trailingslashit($remote_source) . trailingslashit($pluginDir);
 
         global $wp_filesystem;
 
-        if (!isset(static::$pluginFolderMoved[$this->slug]) && !$wp_filesystem->move($source, $newSource, true)) {
+        if (!isset(static::$pluginFolderMoved[$slug]) && !$wp_filesystem->move($source, $newSource, true)) {
             return new \WP_Error('license_bridge', "License Server couldn't find subdirectory in repository.");
         }
 
-        static::$pluginFolderMoved[$this->slug] = true;
+        static::$pluginFolderMoved[$slug] = true;
 
         return $newSource;
     }
@@ -252,8 +233,8 @@ class PremiumUpdate
     /**
      * Set force update.
      */
-    public function setForceUpdate(bool $force)
+    public static function setForceUpdate(bool $force)
     {
-        $this->forceUpdate = $force;
+        static::$forceUpdate = $force;
     }
 }
