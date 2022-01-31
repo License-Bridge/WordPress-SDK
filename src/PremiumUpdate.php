@@ -140,22 +140,20 @@ class PremiumUpdate
      */
     public static function licensePluginUpdate($transient, $slug)
     {
+        if (isset($transient->checked[$slug])) {
+            //return $transient;
+        }
+
         if (empty($transient->checked) && !static::$forceUpdate) {
             return $transient;
         }
 
-        delete_transient($slug);
-        if (false == $remote = get_transient($slug)) {
-            $remote = LicenseServer::instance()->fetchPluginDetails($slug);
+        $remote = LicenseServer::instance()->fetchPluginDetails($slug);
 
-            if (is_wp_error($remote)) {
-                new AdminNotice($remote->get_error_message(), 'error');
+        if (is_wp_error($remote)) {
+            new AdminNotice($remote->get_error_message(), 'error');
 
-                return $transient;
-            }
-
-            $cacheTime = BridgeConfig::getConfig($slug, 'cache-expire');
-            set_transient($slug, $remote, $cacheTime);
+            return $transient;
         }
 
         if ($remote) {
@@ -178,7 +176,7 @@ class PremiumUpdate
                 static::$plugin[$slug] = $res;
             }
         }
-        //var_dump($transient);exit;
+        
         return $transient;
     }
 

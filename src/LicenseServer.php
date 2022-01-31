@@ -50,12 +50,12 @@ class LicenseServer
         $cache = BridgeConfig::getConfig($slug, 'plugin-transient-cache-expire');
 
         $tokenService = Token::instance();
-        if (false == $remote = get_transient($slug)) {
+
+        if (false === $remote = get_transient(md5('details'.$slug))) {
             if (!$token = $tokenService->getLicenceOauthToken($slug)) {
                 
                 return false;
             }
-            
             $headers = [
                 'Accept'        => 'application/json',
                 'Authorization' => 'Bearer ' . $token['access_token'],
@@ -71,14 +71,13 @@ class LicenseServer
             }
 
             if (!$this->validResponse($remote)) {
-                $plugin_data = get_plugin_data(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $slug);
-
-                return new WP_Error('404', "We could not get plugin information from License Bridge for \"{$plugin_data['Name']}\" plugin. Please check is your license expired.");
+                set_transient(md5('details'.$slug), null, $cache);
+                return null;
             }
-
-            set_transient($slug, $remote, $cache);
+            
+            set_transient(md5('details'.$slug), $remote, $cache);
         }
-
+        
         return $remote;
     }
 
@@ -95,7 +94,7 @@ class LicenseServer
         $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
         $cacheTime = BridgeConfig::getConfig($slug, 'cache-expire');
 
-        $cacheId = $prefix . '.details.' . md5($slug);
+        $cacheId = $prefix . '.getLicense.' . md5($slug);
 
         if (!($result = get_transient($cacheId))) {
             $token = Token::instance()->getLicenceOauthToken($slug);
@@ -142,7 +141,7 @@ class LicenseServer
             'headers' => $headers
         ]);
 
-        $cacheId = $prefix . '.details.' . md5($slug);
+        $cacheId = $prefix . '.getLicense.' . md5($slug);
         delete_transient($cacheId);
 
         return json_decode($remote['body'], true);
