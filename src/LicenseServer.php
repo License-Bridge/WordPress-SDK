@@ -88,7 +88,7 @@ class LicenseServer
      * @param string $slug
      * @return array || false
      */
-    public function viewLicense($slug)
+    public function getLicense($slug)
     {
         $credentials = Credentials::get($slug);
         $lbUrl = BridgeConfig::getConfig($slug, 'license-bridge-api-url');
@@ -141,6 +141,9 @@ class LicenseServer
         $remote = wp_remote_get("{$lbUrl}/api/license/cancel/", [
             'headers' => $headers
         ]);
+
+        $cacheId = $prefix . '.details.' . md5($slug);
+        delete_transient($cacheId);
 
         return json_decode($remote['body'], true);
     }

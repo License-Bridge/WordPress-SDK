@@ -10,13 +10,9 @@ class LicenseBridgeSDK
 {
     private $sdkPath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR;
 
-    private static $_instances = [
-        'sdk' => null,
-        'link' => null,
-        'api' => null,
-    ];
+    private static $_instance = null;
 
-    public function __construct()
+    private function __construct()
     {
         require_once $this->sdkPath . 'SlugInstance.php';
         require_once $this->sdkPath . 'BridgeConfig.php';
@@ -30,32 +26,73 @@ class LicenseBridgeSDK
         require_once $this->sdkPath . 'Token.php';
     }
 
+    /**
+     * Singleton instance.
+     *
+     * @return LicenseBridgeSDK
+     */
     public static function instance()
     {
-        if (self::$_instances['sdk'] === null) {
-            self::$_instances['sdk'] = new self();
+        if (self::$_instance === null) {
+            self::$_instance = new self();
         }
 
-        return self::$_instances['sdk'];
+        return self::$_instance;
     }
 
-    public function getPurchaseLink($slug)
+    /**
+     * Get link to purchase a license.
+     *
+     * @param string $slug
+     * @return string
+     */
+    public function purchase_link($slug)
     {
         return PurchaseLink::get($slug);
     }
 
-    public function server()
+    /**
+     * Get license details from the API.
+     *
+     * @param string $slug
+     * @return array
+     */
+    public function license($slug)
     {
-        return LicenseServer::instance();
+        return LicenseServer::instance()->getLicense($slug)['license'] ?? null;
     }
 
-    public function checkCredentials($slug)
+    /**
+     * Is license active
+     *
+     * @param string $slug
+     * @return array
+     */
+    public function is_license_active($slug)
+    {
+        $license = LicenseServer::instance()->getLicense($slug);
+        return $license['license']['active'] ?? false;
+    }
+
+    /**
+     * Cancel a license via API.
+     *
+     * @param string $slug
+     * @return bool
+     */
+    public function cancel_license($slug)
+    {
+        return LicenseServer::instance()->cancelLicense($slug)['success'] ?? false;
+    }
+
+    /**
+     * Are license credentials exist.
+     *
+     * @param string $slug
+     * @return bool
+     */
+    public function license_exists($slug)
     {
         return Credentials::checkCredentials($slug);
-    }
-
-    public function getCredentials($slug)
-    {
-        return Credentials::get($slug);
     }
 }
