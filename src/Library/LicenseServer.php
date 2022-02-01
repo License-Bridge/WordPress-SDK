@@ -1,8 +1,6 @@
 <?php
 
-namespace LicenseBridge\WordPressSDK;
-
-use WP_Error;
+namespace LicenseBridge\WordPressSDK\Library;
 
 class LicenseServer
 {

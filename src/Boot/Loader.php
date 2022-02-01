@@ -2,9 +2,10 @@
 
 namespace LicenseBridge\WordPressSDK\Boot;
 
-use LicenseBridge\WordPressSDK\BridgeConfig;
-use LicenseBridge\WordPressSDK\PremiumUpdate;
-use LicenseBridge\WordPressSDK\PremiumUpgrade;
+use LicenseBridge\WordPressSDK\LicenseBridgeSDK;
+use LicenseBridge\WordPressSDK\Library\BridgeConfig;
+use LicenseBridge\WordPressSDK\Library\PremiumUpdate;
+use LicenseBridge\WordPressSDK\Library\PremiumUpgrade;
 
 if (!class_exists('LicenseBridge\WordPressSDK\Boot\Loader')) {
     class Loader
@@ -89,7 +90,7 @@ if (!class_exists('LicenseBridge\WordPressSDK\Boot\Loader')) {
         {
             global $sdkName;
 
-            return $rootPath . "vendor/license-bridge/wordpress-sdk/src/Boot/{$sdkName}.php";
+            return $rootPath . "vendor/license-bridge/wordpress-sdk/src/{$sdkName}.php";
         }
 
         private static function reorder_plugins($only_active = true)

@@ -1,14 +1,14 @@
 <?php
 
-namespace LicenseBridge\WordPressSDK\Boot;
+namespace LicenseBridge\WordPressSDK;
 
-use LicenseBridge\WordPressSDK\Credentials;
-use LicenseBridge\WordPressSDK\LicenseServer;
-use LicenseBridge\WordPressSDK\PurchaseLink;
+use LicenseBridge\WordPressSDK\Library\Credentials;
+use LicenseBridge\WordPressSDK\Library\LicenseServer;
+use LicenseBridge\WordPressSDK\Library\PurchaseLink;
 
 class LicenseBridgeSDK
 {
-    private $sdkPath = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR;
+    private $sdkPath = __DIR__ . DIRECTORY_SEPARATOR . 'Library' . DIRECTORY_SEPARATOR;
 
     private static $_instance = null;
 
@@ -59,7 +59,10 @@ class LicenseBridgeSDK
      */
     public function license($slug)
     {
-        return LicenseServer::instance()->getLicense($slug)['license'] ?? null;
+        if (!$this->license_exists($slug)) {
+            return false;
+        }
+        return LicenseServer::instance()->getLicense($slug)['license'] ?? false;
     }
 
     /**
@@ -70,6 +73,9 @@ class LicenseBridgeSDK
      */
     public function is_license_active($slug)
     {
+        if (!$this->license_exists($slug)) {
+            return false;
+        }
         $license = LicenseServer::instance()->getLicense($slug);
         return $license['license']['active'] ?? false;
     }

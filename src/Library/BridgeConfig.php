@@ -1,6 +1,6 @@
 <?php
 
-namespace LicenseBridge\WordPressSDK;
+namespace LicenseBridge\WordPressSDK\Library;
 
 class BridgeConfig
 {
