@@ -4,7 +4,6 @@ namespace LicenseBridge\WordPressSDK\Library;
 
 class PremiumUpdate
 {
-    use SlugInstance;
 
     /**
      * Plugin slug.
