@@ -71,7 +71,7 @@ if ($my_license->license_exists($plugin_slug)) {
 ### Check is the license active or not
 ```
 if ($my_license->is_license_active($plugin_slug)) {
-    // User have the license
+    // User license is active
 }
 ```
 
