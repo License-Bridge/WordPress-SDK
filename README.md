@@ -40,7 +40,7 @@ if (!function_exists('my_license')) {
 - **plugin-slug** is your plugin slug usualy created like this: `plugin_basename(__FILE__)`
 - **license-product-slug** is a slug that represent your product/plugin/theme on License Bridge platform. **LINK To HELP FILE**
 
-#### Usage example
+### Usage example
 
 To access to the SDK you can use global variable you created for your own plugin.
 
@@ -53,14 +53,14 @@ or by calling the custom method that will return SDK without creating it each ti
 my_license()
 ```
 
-#### Get unique landing page URL for your product
+### Get unique landing page URL for your product
 
 ```
 $link = $my_license->purchase_link($plugin_slug);
 // https://licensebridge.com/market/my-plugin
 ```
 
-#### Check if user have license key
+### Check if user have license key
 
 ```
 if ($my_license->license_exists($plugin_slug)) {
@@ -68,14 +68,14 @@ if ($my_license->license_exists($plugin_slug)) {
 }
 ```
 
-#### Check is the license active or not
+### Check is the license active or not
 ```
 if ($my_license->is_license_active($plugin_slug)) {
     // User have the license
 }
 ```
 
-#### Get license details from the License Bridge API
+### Get license details from the License Bridge API
 
 ```
 $response = $my_license->license($plugin_slug);
@@ -105,7 +105,7 @@ array (size=13)
       'is_ended' => boolean false
 ```
 
-#### Cancel the user license request
+### Cancel the user license request
 
 In some cases when user is subscribed to your plugin you can allow a user to cancel subscription to your plugin.
 This is how user can cancel license subscription.
@@ -116,7 +116,7 @@ if ($my_license->cancel_license($plugin_slug)) {
 }
 ```
 
-#### License
+### License
 Copyright (c) License Bridge.
 
 Licensed under the GNU general public license (version 3).
