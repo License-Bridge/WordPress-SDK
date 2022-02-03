@@ -14,7 +14,6 @@ class LicenseBridgeSDK
 
     private function __construct()
     {
-        require_once $this->sdkPath . 'SlugInstance.php';
         require_once $this->sdkPath . 'BridgeConfig.php';
         require_once $this->sdkPath . 'Credentials.php';
         require_once $this->sdkPath . 'AdminNotice.php';
