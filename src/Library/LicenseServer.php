@@ -49,9 +49,8 @@ class LicenseServer
 
         $tokenService = Token::instance();
 
-        if (false === $remote = get_transient(md5('details'.$slug))) {
+        if (false === $remote = get_transient(md5('details' . $slug))) {
             if (!$token = $tokenService->getLicenceOauthToken($slug)) {
-                
                 return false;
             }
             $headers = [
@@ -60,7 +59,7 @@ class LicenseServer
                 'LicenseKey'    => get_option($prefix . 'my_license_key'),
             ];
 
-            $remote = wp_remote_post("{$lbUrl}/api/plugin/details/{$product}", [
+            $remote = wp_remote_get("{$lbUrl}/api/plugin/details/{$product}", [
                 'headers' => $headers,
             ]);
 
@@ -69,18 +68,19 @@ class LicenseServer
             }
 
             if (!$this->validResponse($remote)) {
-                set_transient(md5('details'.$slug), null, $cache);
+                set_transient(md5('details' . $slug), null, $cache);
+
                 return null;
             }
-            
-            set_transient(md5('details'.$slug), $remote, $cache);
+
+            set_transient(md5('details' . $slug), $remote, $cache);
         }
-        
+
         return $remote;
     }
 
     /**
-     * API call to view license details
+     * API call to view license details.
      *
      * @param string $slug
      * @return array || false
@@ -104,7 +104,7 @@ class LicenseServer
                 ];
 
                 $remote = wp_remote_get("{$lbUrl}/api/license/view/", [
-                    'headers' => $headers
+                    'headers' => $headers,
                 ]);
 
                 $result = json_decode($remote['body'], true);
@@ -116,7 +116,7 @@ class LicenseServer
     }
 
     /**
-     * API call to cancel license
+     * API call to cancel license.
      *
      * @param string $slug
      * @return array
@@ -135,8 +135,9 @@ class LicenseServer
             'LicenseKey'    => $credentials['license_key'],
         ];
 
-        $remote = wp_remote_get("{$lbUrl}/api/license/cancel/", [
-            'headers' => $headers
+        $remote = wp_remote_request("{$lbUrl}/api/license/cancel/", [
+            'method'  => 'PUT',
+            'headers' => $headers,
         ]);
 
         $cacheId = $prefix . '.getLicense.' . md5($slug);
