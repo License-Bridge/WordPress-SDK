@@ -47,15 +47,11 @@ class Token
                 ]);
 
                 if ($response['response']['code'] != 200) {
-                    new AdminNotice("We can't get key from Licence Bridge. The error has occurred.", 'error');
-
                     return false;
                 }
                 $jsonResponse = json_decode($response['body']);
 
                 if (!$jsonResponse) {
-                    new AdminNotice("We can't get key from Licence Bridge. The error has occurred.", 'error');
-
                     return false;
                 }
 
@@ -66,7 +62,7 @@ class Token
                 update_option($prefix . 'my_access_token', serialize($token));
             }
         } catch (\Exception $e) {
-            new AdminNotice("We can't get key from Licence Bridge. The error has occurred.", 'error');
+            return false;
         }
 
         return $token;
