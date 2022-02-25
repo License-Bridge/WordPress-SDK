@@ -59,7 +59,7 @@ class LicenseServer
                 'LicenseKey'    => get_option($prefix . 'my_license_key'),
             ];
 
-            $remote = wp_remote_get("{$lbUrl}/api/plugin/details/{$product}", [
+            $remote = wp_remote_get("{$lbUrl}/api/product/{$product}", [
                 'headers' => $headers,
             ]);
 
@@ -103,7 +103,7 @@ class LicenseServer
                     'LicenseKey'    => $credentials['license_key'],
                 ];
 
-                $remote = wp_remote_get("{$lbUrl}/api/license/view/", [
+                $remote = wp_remote_get("{$lbUrl}/api/license/", [
                     'headers' => $headers,
                 ]);
 
@@ -139,7 +139,6 @@ class LicenseServer
             'method'  => 'PUT',
             'headers' => $headers,
         ]);
-
         $cacheId = $prefix . '.getLicense.' . md5($slug);
         delete_transient($cacheId);
 
