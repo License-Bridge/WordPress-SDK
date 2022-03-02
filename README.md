@@ -42,25 +42,25 @@ if (!function_exists('my_license')) {
 
 ### Usage example
 
-To access to the SDK you can use global variable you created for your own plugin.
+To access to the SDK you can use the global variable you created for your own plugin.
 
 ```
 $my_license
 ```
 
-or by calling the custom method that will return SDK without creating it each time.
+Or by calling the custom method that will return SDK without creating it each time.
 ```
 my_license()
 ```
 
-### Get unique landing page URL for your product
+### Get a unique landing page URL for your product
 
 ```
 $link = $my_license->purchase_link($plugin_slug);
 // https://licensebridge.com/market/my-plugin
 ```
 
-### Check if user have license key
+### Check if the user has a license key
 
 ```
 if ($my_license->license_exists($plugin_slug)) {
@@ -68,20 +68,20 @@ if ($my_license->license_exists($plugin_slug)) {
 }
 ```
 
-### Check is the license active or not
+### Check if the license is active
 ```
 if ($my_license->is_license_active($plugin_slug)) {
     // User license is active
 }
 ```
 
-### Get license details from the License Bridge API
+### Get a license details
 
 ```
 $response = $my_license->license($plugin_slug);
 ```
 
-Response can be false is license do not exist. Expected response is array with license details:
+Response can be false is license does not exist. Expected response is an array with license details:
 
 ```
 array (size=13)
@@ -107,8 +107,8 @@ array (size=13)
 
 ### Cancel the user license request
 
-In some cases when user is subscribed to your plugin you can allow a user to cancel subscription to your plugin.
-This is how user can cancel license subscription.
+Sometimes, when the user is subscribed to your plugin, you can allow a user to cancel subscription to your plugin.
+This is how the user can cancel license subscription.
 
 ```
 if ($my_license->cancel_license($plugin_slug)) {
