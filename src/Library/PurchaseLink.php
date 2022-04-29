@@ -14,7 +14,7 @@ class PurchaseLink
         $productSlug = BridgeConfig::getConfig($slug, 'license-product-slug');
 
         $nonce = wp_create_nonce($slug."_license_key_nonce");
-        $callback = urlencode(admin_url('admin.php?page='.$valuesUri.'&_nonce=' . $nonce));
+        $callback = base64_encode(admin_url('admin.php?page='.$valuesUri.'&_nonce=' . $nonce));
         return "${lbUrl}/market/${productSlug}?callback_url={$callback}";
     }
 }

@@ -61,6 +61,7 @@ class PremiumUpgrade
      */
     public static function upgradePlugin($slug)
     {
+        WP_Filesystem();
         include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
         wp_cache_flush();
 
