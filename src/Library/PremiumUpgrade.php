@@ -47,6 +47,9 @@ class PremiumUpgrade
         // Delete viewCache ID
         $cacheId = $prefix . '.details.' . md5($slug);
         delete_transient($cacheId);
+        //Delete License Cache
+        $licenseCacheId = $prefix . '.getLicense.' . md5($slug);
+        delete_transient($licenseCacheId);
 
         echo apply_filters('before_upgrade_plugin_' . $slug, '');
         self::upgradePlugin($slug);
