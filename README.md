@@ -173,18 +173,6 @@ apply_filters('after_upgrade_plugin_' . $plugin_slug, '');
 
 See [license-example-plugin](https://github.com/License-Bridge) for a full working integration.
 
-## Releasing this SDK
-
-```bash
-# Ensure composer.json version matches CHANGELOG
-git add CHANGELOG.md README.md composer.json
-git commit -m "Release 1.0.29"
-git tag 1.0.29
-git push origin master --tags
-```
-
-Packagist picks up new tags from GitHub automatically (if configured).
-
 ## License
 
 Copyright (c) License Bridge.

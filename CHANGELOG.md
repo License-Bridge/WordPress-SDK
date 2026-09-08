@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.30] - 2026-09-08
+
+### Changed
+
+- Move SDK release instructions from public README to `RELEASE.md`.
+
 ## [1.0.29] - 2026-09-08
 
 ### Added
