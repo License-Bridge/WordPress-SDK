@@ -1,122 +1,192 @@
 # WordPress-SDK
 
-This is official License Bridge WordPress SDK. Adding this SDK to your WordPress plugin you enables all features that comes with License Bridge platform.
+Official [License Bridge](https://licensebridge.com) WordPress SDK. Add it to your plugin or theme to enable:
 
-- Licensing for WordPress plugin
-- Landing page with Secure Checkout for customers to purchase a license. After purchase plugin will be auto updated with premium version.
-- Recurring Payments - Build a sustainable business with recurring payments. Sell annual or monthly subscriptions.
-- Automatic Updates for WordPress plugins & themes
+- License storage and validation
+- Secure checkout landing page (hosted by License Bridge)
+- Automatic upgrade from free to premium after purchase
+- Recurring payments (subscriptions)
+- Automatic plugin updates for licensed customers
 
-## Integrate SDK with WordPress plugin
+## Requirements
 
-This is an example how you can create your own unique method that will be used in your plugin only, and your global variable that will hold SDK.
+- **PHP** 7.2 or higher
+- **WordPress** 6.4 or higher (tested up to 6.7+)
+- **Composer** (recommended)
 
-Make sure to replace `my_license` with your own referrence.
+## Installation
 
+```bash
+composer require license-bridge/wordpress-sdk
 ```
+
+Commit `composer.json` and `composer.lock`. Do not edit files inside `vendor/` directly.
+
+## Quick integration
+
+Create a helper function in your main plugin file (rename `my_license` to something unique to your plugin):
+
+```php
 if (!function_exists('my_license')) {
-    // Create a helper function for easy SDK access.
     function my_license()
     {
         global $my_license;
+
         if ($my_license) {
             return $my_license;
         }
 
+        if (!file_exists(__DIR__ . '/vendor/autoload.php')) {
+            return null;
+        }
+
+        require_once __DIR__ . '/vendor/autoload.php';
         include __DIR__ . '/vendor/license-bridge/wordpress-sdk/src/Boot/bootstrap.php';
-        
-        $pluginFilePath = __FILE__;
-        $my_license = Loader::register($pluginFilePath, [
-            'plugin-slug'                   => plugin_basename(__FILE__),
-            'license-product-slug'          => 'my-first-product',
+
+        $my_license = \LicenseBridge\WordPressSDK\Boot\Loader::register(__FILE__, [
+            'plugin-slug'          => plugin_basename(__FILE__),
+            'license-product-slug' => 'my-first-product',
         ]);
 
         return $my_license;
     }
+
     my_license();
 }
 ```
 
-- **plugin-slug** is your plugin slug usualy created like this: `plugin_basename(__FILE__)`
-- **license-product-slug** is a slug that represent your product/plugin/theme on License Bridge platform. **LINK To HELP FILE**
+`Loader::register()` automatically wires:
 
-### Usage example
+- Hidden admin callback page (post-purchase license storage)
+- Premium plugin upgrade
+- WordPress update API integration
 
-To access to the SDK you can use the global variable you created for your own plugin.
+You do **not** need to manually instantiate internal SDK classes.
 
+## Configuration
+
+Pass these keys to `Loader::register()` (merged with SDK defaults):
+
+| Key | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `plugin-slug` | Yes | — | `plugin_basename(__FILE__)` |
+| `license-product-slug` | Yes | — | Product slug on License Bridge |
+| `license-bridge-url` | No | `https://licensebridge.com` | Market / checkout base URL |
+| `license-bridge-api-url` | No | `https://app.licensebridge.com` | API base URL (OAuth, license, updates) |
+| `license-bridge-oauth-token-uri` | No | `/oauth/token` | OAuth token path |
+| `plugin-transient-cache-expire` | No | `43200` (12h) | Plugin details cache (seconds) |
+| `cache-expire` | No | `3600` (1h) | General cache (seconds) |
+
+### Local / staging example
+
+```php
+$my_license = \LicenseBridge\WordPressSDK\Boot\Loader::register(__FILE__, [
+    'plugin-slug'            => plugin_basename(__FILE__),
+    'license-product-slug'   => 'my-first-product',
+    'license-bridge-url'     => 'http://market.lb.test',
+    'license-bridge-api-url' => 'https://your-tunnel.ngrok-free.app',
+]);
 ```
-$my_license
+
+## Usage
+
+Access the SDK via your helper or global:
+
+```php
+$bridge = my_license();
+$slug   = plugin_basename(__FILE__);
 ```
 
-Or by calling the custom method that will return SDK without creating it each time.
-```
-my_license()
+### Purchase link
+
+```php
+$link = $bridge->purchase_link($slug);
+// https://licensebridge.com/market/my-first-product?callback_url=...
 ```
 
-### Get a unique landing page URL for your product
+Use in a button:
 
-```
-$link = $my_license->purchase_link($plugin_slug);
-// https://licensebridge.com/market/my-plugin
+```php
+echo '<a href="' . esc_url($link) . '">Buy Premium</a>';
 ```
 
-### Check if the user has a license key
+### Check license
 
-```
-if ($my_license->license_exists($plugin_slug)) {
-    // User have the license
+```php
+if ($bridge->license_exists($slug)) {
+    // Credentials stored locally
+}
+
+if ($bridge->is_license_active($slug)) {
+    // Active license on License Bridge
 }
 ```
 
-### Check if the license is active
+### License details
+
+```php
+$details = $bridge->license($slug); // array|false
 ```
-if ($my_license->is_license_active($plugin_slug)) {
-    // User license is active
+
+Example fields: `full_name`, `email`, `plan_type`, `active`, `subscribed`, `subscription`, etc.
+
+### Cancel subscription
+
+```php
+if ($bridge->cancel_license($slug)) {
+    // Cancelled on License Bridge
 }
 ```
 
-### Get a license details
+## Post-purchase flow
 
-```
-$response = $my_license->license($plugin_slug);
-```
+After checkout, License Bridge redirects the customer to your WordPress admin. The SDK:
 
-Response can be false is license does not exist. Expected response is an array with license details:
+1. Verifies the nonce
+2. Stores `lk`, `client_id`, `client_secret`
+3. Runs premium plugin upgrade (if a newer package is available)
+4. Redirects to **Plugins** screen:
+   - `wp-admin/plugins.php?license_upgraded=1` — upgrade ran
+   - `wp-admin/plugins.php?license_saved=1` — license saved, no newer version
 
-```
-array (size=13)
-  'first_name' => string 'John' (length=11)
-  'last_name' => string 'Doe' (length=10)
-  'full_name' => string 'John Doe' (length=22)
-  'email' => string 'johndoe@mail.com' (length=20)
-  'plan_type' => string 'month' (length=5)
-  'plan_name' => string 'plan' (length=4)
-  'charge_type' => string 'subscription' (length=12)
-  'gateway' => string 'stripe' (length=6)
-  'active' => boolean true
-  'created_at' => string '01/27/2022 18:07:48' (length=19)
-  'subscribed' => boolean true
-  'cancelled' => boolean true
-  'subscription' => 
-    array (size=4)
-      'stripe_id' => string 'sub_0KMcNuxCqoZozrbaG75rgcZs' (length=28)
-      'stripe_customer_id' => string 'cus_L2hnYEuIw2p3pE' (length=18)
-      'ends_at_formated' => string 'February 27, 2022' (length=17)
-      'is_ended' => boolean false
+Show admin feedback:
+
+```php
+add_action('admin_notices', function () {
+    if (isset($_GET['license_upgraded'])) {
+        echo '<div class="notice notice-success"><p>Premium activated.</p></div>';
+    }
+});
 ```
 
-### Cancel the user license request
+**Important:** Premium version on License Bridge must be **higher** than the installed free version for auto-upgrade to run.
 
-Sometimes, when the user is subscribed to your plugin, you can allow a user to cancel subscription to your plugin.
-This is how the user can cancel license subscription.
+## Hooks
 
+```php
+// Before/after upgrade (callback handler)
+apply_filters('before_upgrade_plugin_' . $plugin_slug, '');
+apply_filters('after_upgrade_plugin_' . $plugin_slug, '');
 ```
-if ($my_license->cancel_license($plugin_slug)) {
-    // User license is canceled
-}
+
+## Example plugin
+
+See [license-example-plugin](https://github.com/License-Bridge) for a full working integration.
+
+## Releasing this SDK
+
+```bash
+# Ensure composer.json version matches CHANGELOG
+git add CHANGELOG.md README.md composer.json
+git commit -m "Release 1.0.29"
+git tag 1.0.29
+git push origin master --tags
 ```
 
-### License
+Packagist picks up new tags from GitHub automatically (if configured).
+
+## License
+
 Copyright (c) License Bridge.
 
-Licensed under the GNU general public license (version 3).
+Licensed under the GNU General Public License v3.0.
