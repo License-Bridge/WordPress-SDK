@@ -10,17 +10,46 @@ class PremiumUpgrade
     {
         add_action('admin_menu', function () use ($slug) {
             $url = BridgeConfig::getConfig($slug, 'save-credentials-uri');
-            add_menu_page(
+            $page_hook = add_menu_page(
                 'License Bridge Store',
                 'License Bridge Store',
                 'manage_options',
                 $url,
-                function () use ($slug) {
-                    self::saveLicenseKey($slug);
-                }
+                '__return_empty_string'
             );
             remove_menu_page($url);
+            add_action('load-' . $page_hook, function () use ($slug) {
+                self::handleLicenseCallbackPage($slug);
+            });
         });
+    }
+
+    /**
+     * Process the post-purchase callback before admin-header is rendered.
+     *
+     * @param string $slug
+     * @return void
+     */
+    public static function handleLicenseCallbackPage($slug)
+    {
+        global $title;
+        $title = 'License Bridge Store';
+
+        if (!wp_verify_nonce($_REQUEST['_nonce'] ?? '', $slug . '_license_key_nonce')) {
+            wp_die(esc_html__('Invalid security token.', 'license-bridge'));
+        }
+
+        self::storeLicenseCredentials($slug);
+        self::clearLicenseCaches($slug);
+        delete_site_transient('update_plugins');
+
+        ob_start();
+        $upgraded = self::upgradePlugin($slug);
+        ob_end_clean();
+
+        $query_arg = $upgraded ? 'license_upgraded=1' : 'license_saved=1';
+        wp_safe_redirect(admin_url('plugins.php?' . $query_arg));
+        exit;
     }
 
     /**
@@ -30,26 +59,17 @@ class PremiumUpgrade
      *  - oauth client id
      *  - oauth clinet secret.
      *
+     * @param string $slug
      * @return void
      */
     public static function saveLicenseKey($slug)
     {
-        if (!wp_verify_nonce($_REQUEST['_nonce'], $slug . '_license_key_nonce')) {
+        if (!wp_verify_nonce($_REQUEST['_nonce'] ?? '', $slug . '_license_key_nonce')) {
             return;
         }
-        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
-        // Check license key and save it
-        update_option($prefix . 'my_license_key', $_REQUEST['lk']);
-        update_option($prefix . 'my_client_id', $_REQUEST['client_id']);
-        update_option($prefix . 'my_client_secret', $_REQUEST['client_secret']);
-        update_option($prefix . 'my_access_token', false);
 
-        // Delete viewCache ID
-        $cacheId = $prefix . '.details.' . md5($slug);
-        delete_transient($cacheId);
-        //Delete License Cache
-        $licenseCacheId = $prefix . '.getLicense.' . md5($slug);
-        delete_transient($licenseCacheId);
+        self::storeLicenseCredentials($slug);
+        self::clearLicenseCaches($slug);
 
         echo apply_filters('before_upgrade_plugin_' . $slug, '');
         self::upgradePlugin($slug);
@@ -57,25 +77,55 @@ class PremiumUpgrade
     }
 
     /**
+     * @param string $slug
+     * @return void
+     */
+    private static function storeLicenseCredentials($slug)
+    {
+        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
+        update_option($prefix . 'my_license_key', $_REQUEST['lk']);
+        update_option($prefix . 'my_client_id', $_REQUEST['client_id']);
+        update_option($prefix . 'my_client_secret', $_REQUEST['client_secret']);
+        update_option($prefix . 'my_access_token', false);
+    }
+
+    /**
+     * @param string $slug
+     * @return void
+     */
+    private static function clearLicenseCaches($slug)
+    {
+        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
+        delete_transient($prefix . '.details.' . md5($slug));
+        delete_transient($prefix . '.getLicense.' . md5($slug));
+    }
+
+    /**
      * Upgrade and activate the plugin.
      *
-     * @param string $plugin_slug
-     * @return bool
+     * @param string $slug
+     * @return bool|\WP_Error|null
      */
     public static function upgradePlugin($slug)
     {
         WP_Filesystem();
         include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        include_once ABSPATH . 'wp-admin/includes/class-automatic-upgrader-skin.php';
+
         wp_cache_flush();
 
-        $upgrader = new Plugin_Upgrader();
+        $upgrader = new Plugin_Upgrader(new \Automatic_Upgrader_Skin());
         PremiumUpdate::init_hooks($slug);
         PremiumUpdate::setForceUpdate(true);
         $upgraded = $upgrader->upgrade($slug);
-        activate_plugin($slug);
-        $upgrader->maintenance_mode(false);
 
+        if (!is_wp_error($upgraded) && !is_plugin_active($slug)) {
+            activate_plugin($slug);
+        }
+
+        $upgrader->maintenance_mode(false);
         PremiumUpdate::setForceUpdate(false);
+
         return $upgraded;
     }
 }

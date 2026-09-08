@@ -74,7 +74,7 @@ if (!class_exists('LicenseBridge\WordPressSDK\Boot\Loader')) {
             if (class_exists(LicenseBridgeSDK::class)) {
                 $sdk = LicenseBridgeSDK::instance();
 
-                $plugin_data = get_plugin_data(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $plugin['plugin-slug']);
+                $plugin_data = get_plugin_data(WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $plugin['plugin-slug'], false, false);
                 BridgeConfig::setConfig($plugin['plugin-slug'], $plugin + [
                 'plugin-version'   => $plugin_data['Version'],
                 'plugin-directory' => plugin_dir_path($plugin['plugin-slug']),

@@ -2,10 +2,10 @@
   "name": "license-bridge/wordpress-sdk",
   "description": "License Bridge WordPress SDK",
   "keywords": ["freemium", "license", "wordpress", "plugin", "wordpress-plugin", "theme", "wordpress-theme", "sdk"],
-  "version": "1.0.28",
+  "version": "1.0.29",
   "homepage": "https://license-bridge.com",
   "license": "GPL-3.0-only",
   "require": {
-      "php": ">=5.4"
+      "php": ">=7.2"
   }
 }

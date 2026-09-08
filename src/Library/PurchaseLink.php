@@ -13,8 +13,9 @@ class PurchaseLink
         $lbUrl = BridgeConfig::getConfig($slug, 'license-bridge-url');
         $productSlug = BridgeConfig::getConfig($slug, 'license-product-slug');
 
-        $nonce = wp_create_nonce($slug."_license_key_nonce");
-        $callback = base64_encode(admin_url('admin.php?page='.$valuesUri.'&_nonce=' . $nonce));
-        return "${lbUrl}/market/${productSlug}?callback_url={$callback}";
+        $nonce = wp_create_nonce($slug . '_license_key_nonce');
+        $callback = base64_encode(admin_url('admin.php?page=' . urlencode($valuesUri) . '&_nonce=' . $nonce));
+
+        return $lbUrl . '/market/' . $productSlug . '?callback_url=' . rawurlencode($callback);
     }
 }

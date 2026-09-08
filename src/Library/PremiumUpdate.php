@@ -150,7 +150,7 @@ class PremiumUpdate
         $remote = LicenseServer::instance()->fetchPluginDetails($slug);
 
         if (is_wp_error($remote)) {
-            new AdminNotice($remote->get_error_message(), 'error');
+            AdminNotice::add($remote->get_error_message(), 'error');
 
             return $transient;
         }

@@ -4,42 +4,74 @@ namespace LicenseBridge\WordPressSDK\Library;
 
 class AdminNotice
 {
-    
     /**
-     * Message
-     *
-     * @var string
+     * @var array<string, array{message: string, type: string}>
      */
-    private $message;
+    private static $notices = [];
 
     /**
-     * Type of the message (updated, error, info)
-     *
-     * @var [type]
+     * @var bool
      */
-    private $type;
+    private static $hookRegistered = false;
 
     /**
-     * Execute action admin_notice
+     * Queue an admin notice once per unique message per request.
      *
      * @param string $message
-     * @param string $info
+     * @param string $type
+     * @return void
      */
-    public function __construct($message, $type = 'updated')
+    public static function add($message, $type = 'error')
     {
-        $this->message = $message;
-        $this->type = $type;
+        $message = (string) $message;
+        $type = (string) $type;
+        $key = md5($type . '|' . $message);
 
-        add_action('admin_notices', array($this, 'render'));
+        if (isset(self::$notices[$key])) {
+            return;
+        }
+
+        self::$notices[$key] = [
+            'message' => $message,
+            'type' => $type,
+        ];
+
+        if (!self::$hookRegistered) {
+            self::$hookRegistered = true;
+            add_action('admin_notices', [self::class, 'renderAll']);
+        }
     }
 
     /**
-     * Renter the message
-     *
+     * @param string $message
+     * @param string $type
+     */
+    public function __construct($message, $type = 'updated')
+    {
+        self::add($message, $type);
+    }
+
+    /**
      * @return void
      */
-    public function render()
+    public static function renderAll()
     {
-        printf('<div class="update-nag notice inline notice-%s">%s</div>', $this->type, $this->message);
+        foreach (self::$notices as $notice) {
+            $class = 'notice';
+
+            if ($notice['type'] === 'error') {
+                $class .= ' notice-error';
+            } elseif ($notice['type'] === 'updated') {
+                $class .= ' notice-success';
+            } else {
+                $class .= ' notice-info';
+            }
+
+            printf(
+                '<div class="%s is-dismissible"><p>%s</p></div>',
+                esc_attr($class),
+                esc_html($notice['message'])
+            );
+        }
     }
 }
