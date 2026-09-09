@@ -110,6 +110,43 @@ Use in a button:
 echo '<a href="' . esc_url($link) . '">Buy Premium</a>';
 ```
 
+### Inline checkout (wp-admin modal) — SDK 2.0+
+
+Keep customers inside WordPress admin with a billing modal. Supports **Paddle overlay** and **Stripe Elements**. PayPal still uses the hosted purchase link (redirect).
+
+Fixed plan on the button:
+
+```php
+echo my_license()->checkout_button($slug, [
+    'plugin-file' => __FILE__,
+    'gateway'     => 'paddle', // or stripe
+    'plan-slug'   => 'pro',
+    'plan-type'   => 'annual',
+    'label'       => 'Upgrade to Pro',
+]);
+```
+
+Let the customer pick a plan:
+
+```php
+echo my_license()->checkout_button($slug, [
+    'plugin-file'          => __FILE__,
+    'gateway'              => 'stripe',
+    'allow-plan-selection' => true,
+]);
+```
+
+| Key | Description |
+|-----|-------------|
+| `plugin-file` | Main plugin file path (`__FILE__`) so SDK assets load from `vendor/license-bridge/wordpress-sdk/assets` |
+| `gateway` | `paddle` or `stripe` |
+| `plan-slug` | Fixed plan slug (optional when `allow-plan-selection` is true) |
+| `plan-type` | `month`, `annual`, or `life` (optional; inferred from API when omitted) |
+| `allow-plan-selection` | Show plan / billing-cycle selectors |
+| `label` | Button text |
+
+The hosted market link remains available as a fallback via `purchase_link()`.
+
 ### Check license
 
 ```php

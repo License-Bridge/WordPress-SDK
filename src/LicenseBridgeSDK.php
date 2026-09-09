@@ -2,6 +2,8 @@
 
 namespace LicenseBridge\WordPressSDK;
 
+use LicenseBridge\WordPressSDK\Checkout\Button;
+use LicenseBridge\WordPressSDK\Library\BridgeConfig;
 use LicenseBridge\WordPressSDK\Library\Credentials;
 use LicenseBridge\WordPressSDK\Library\LicenseServer;
 use LicenseBridge\WordPressSDK\Library\PurchaseLink;
@@ -37,6 +39,23 @@ class LicenseBridgeSDK
         }
 
         return self::$_instance;
+    }
+
+    /**
+     * Render inline checkout button (wp-admin billing modal).
+     *
+     * @param string $slug
+     * @param array<string, mixed> $config
+     */
+    public function checkout_button(string $slug, array $config = []): string
+    {
+        $base = [
+            'plugin-slug'          => $slug,
+            'license-product-slug' => BridgeConfig::getConfig($slug, 'license-product-slug'),
+            'save-credentials-uri' => BridgeConfig::getConfig($slug, 'save-credentials-uri'),
+        ];
+
+        return Button::render($base + $config);
     }
 
     /**

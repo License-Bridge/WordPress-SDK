@@ -14,3 +14,13 @@
     $lb_plugins = get_option('lb_registered_plugins');
 
     include_once 'Loader.php';
+
+    require_once __DIR__ . '/../Checkout/CheckoutConfig.php';
+    require_once __DIR__ . '/../Checkout/CheckoutAjax.php';
+    require_once __DIR__ . '/../Checkout/CheckoutAssets.php';
+    require_once __DIR__ . '/../Checkout/BillingModal.php';
+    require_once __DIR__ . '/../Checkout/Button.php';
+
+    // AJAX handlers must register on every request (including admin-ajax.php),
+    // not only when checkout_button() renders on an admin page.
+    \LicenseBridge\WordPressSDK\Checkout\CheckoutAjax::register();

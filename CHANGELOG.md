@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-09-09
+
+### Added
+
+- **Inline wp-admin checkout** — `Checkout\Button::render()` and `$bridge->checkout_button()` open a billing modal inside WordPress admin instead of redirecting to the hosted market page.
+- **Paddle overlay checkout** — Paddle Billing v2 overlay from wp-admin after billing details are collected.
+- **Stripe Elements** — card entry in the billing modal for immediate Stripe charges.
+- **Plan configuration on button** — fixed `plan-slug` / `plan-type`, or `allow-plan-selection` to load plans from the API.
+- **Gateway selection** — `gateway` config key accepts `paddle` or `stripe` (PayPal remains redirect-only via purchase link).
+
+### Changed
+
+- Checkout AJAX proxies plan lookup and charge initiation to License Bridge API (secrets stay server-side).
+
 ## [1.0.30] - 2026-09-08
 
 ### Changed

@@ -68,6 +68,10 @@ if (!class_exists('LicenseBridge\WordPressSDK\Boot\Loader')) {
                 'lb_registered_plugins',
                 !empty($updated) ? ($updated) : [$pluginInfo]
             );
+
+            global $lb_plugins;
+            $lb_plugins = get_option('lb_registered_plugins');
+
             self::reorder_plugins(is_plugin_active($plugin['plugin-slug']));
             self::load_latest_sdk();
 
@@ -78,6 +82,7 @@ if (!class_exists('LicenseBridge\WordPressSDK\Boot\Loader')) {
                 BridgeConfig::setConfig($plugin['plugin-slug'], $plugin + [
                 'plugin-version'   => $plugin_data['Version'],
                 'plugin-directory' => plugin_dir_path($plugin['plugin-slug']),
+                'plugin-file'      => $pluginFilePath,
             ]);
                 PremiumUpgrade::init_hooks($plugin['plugin-slug']);
                 PremiumUpdate::init_hooks($plugin['plugin-slug']);
@@ -141,7 +146,15 @@ if (!class_exists('LicenseBridge\WordPressSDK\Boot\Loader')) {
             $version = isset($plugin['sdk_version']) ? $plugin['sdk_version'] : $thisSdkVersion;
 
             if ($plugin && isset($plugin['sdk_version']) && isset($plugin['sdk_path'])) {
-                include_once $plugin['sdk_path'];
+                $sdkPath = $plugin['sdk_path'];
+
+                if (!is_readable($sdkPath) && !empty($plugin['plugin-slug'])) {
+                    $sdkPath = self::get_sdk_path(plugin_dir_path(WP_PLUGIN_DIR . '/' . $plugin['plugin-slug']));
+                }
+
+                if (is_readable($sdkPath)) {
+                    include_once $sdkPath;
+                }
 
                 return;
             }
