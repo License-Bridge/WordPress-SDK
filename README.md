@@ -171,7 +171,7 @@ apply_filters('after_upgrade_plugin_' . $plugin_slug, '');
 
 ## Example plugin
 
-See [license-example-plugin](https://github.com/License-Bridge) for a full working integration.
+See [license-example-plugin](https://github.com/Djuki/license-example-plugin) for a full working integration.
 
 ## License
 
