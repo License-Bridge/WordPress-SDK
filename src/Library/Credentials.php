@@ -19,6 +19,30 @@ class Credentials
         return !empty($clientId) && !empty($secret);
     }
 
+    public static function hasLicenseKey($slug): bool
+    {
+        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
+
+        return ! empty(get_option($prefix . 'my_license_key'));
+    }
+
+    public static function needsOAuthProvisioning($slug): bool
+    {
+        return self::hasLicenseKey($slug) && ! self::checkCredentials($slug);
+    }
+
+    /**
+     * Persist OAuth credentials using the same storage as the checkout callback flow.
+     */
+    public static function storeOAuthCredentials($slug, $licenseKey, $clientId, $clientSecret): void
+    {
+        $prefix = BridgeConfig::getConfig($slug, 'option-prefix');
+        update_option($prefix . 'my_license_key', $licenseKey);
+        update_option($prefix . 'my_client_id', $clientId);
+        update_option($prefix . 'my_client_secret', $clientSecret);
+        update_option($prefix . 'my_access_token', false);
+    }
+
     /**
      * Get credentials
      */

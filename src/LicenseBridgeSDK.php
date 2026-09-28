@@ -24,6 +24,7 @@ class LicenseBridgeSDK
         require_once $this->sdkPath . 'PremiumUpdate.php';
         require_once $this->sdkPath . 'PurchaseLink.php';
         require_once $this->sdkPath . 'Remote.php';
+        require_once $this->sdkPath . 'OAuthProvisioner.php';
         require_once $this->sdkPath . 'Token.php';
     }
 

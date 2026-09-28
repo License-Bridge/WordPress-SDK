@@ -74,6 +74,7 @@ Pass these keys to `Loader::register()` (merged with SDK defaults):
 | `license-bridge-url` | No | `https://licensebridge.com` | Market / checkout base URL |
 | `license-bridge-api-url` | No | `https://app.licensebridge.com` | API base URL (OAuth, license, updates) |
 | `license-bridge-oauth-token-uri` | No | `/oauth/token` | OAuth token path |
+| `provisioning-key` | For imported-license migration | — | Product provisioning key from License Bridge admin (import page). Required for automatic OAuth provisioning when only a license key is stored locally |
 | `plugin-transient-cache-expire` | No | `43200` (12h) | Plugin details cache (seconds) |
 | `cache-expire` | No | `3600` (1h) | General cache (seconds) |
 
@@ -197,6 +198,28 @@ add_action('admin_notices', function () {
 ```
 
 **Important:** Premium version on License Bridge must be **higher** than the installed free version for auto-upgrade to run.
+
+## Imported license migration (Freemius and other platforms)
+
+When you import licenses from another platform, License Bridge preserves each customer's original license key. OAuth credentials are **not** created during import and **do not** need to be distributed manually.
+
+Embed your product **provisioning key** (shown on the License Bridge import page) in the plugin SDK config:
+
+```php
+$my_license = \LicenseBridge\WordPressSDK\Boot\Loader::register(__FILE__, [
+    'plugin-slug'          => plugin_basename(__FILE__),
+    'license-product-slug' => 'my-first-product',
+    'provisioning-key'     => 'your-product-provisioning-key',
+]);
+```
+
+When a site already stores the imported license key but has no OAuth credentials yet, the SDK automatically provisions credentials on the first connection. The customer does not configure OAuth manually.
+
+If OAuth credentials were already stored (for example after checkout), the SDK continues using them and does not call provisioning again.
+
+OAuth provisioning happens **once per license**. Existing credentials are never rotated or re-exposed through the provisioning endpoint.
+
+This feature does **not** migrate subscription billing, payment-provider subscriptions, activation history, or remote renewal. Imported licenses keep their local entitlement dates only.
 
 ## Hooks
 
